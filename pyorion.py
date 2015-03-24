@@ -70,12 +70,13 @@ class OrionEntity:
 
 
     # attribute deletion
-    def del_attribute(self, attribute):
+    def del_attributes(self, attributes):
         
         """It receives an attribute to delete from the entity"""
 
-        ind = self.attrs.index(attribute)
-        del self.attrs[ind]
+        for a in attributes:
+            ind = self.attrs.index(a)
+            del self.attrs[ind]
         
 
     # json representation
@@ -259,9 +260,12 @@ class OrionKP:
 
 
     # custom query
-    def custom_query(self, query_url):
+    def custom_query(self, query_suffix):
         
         """It performs a custom query based on the given URL."""
+
+        # build the query url
+        query_url = "%s:%s/ngsi10/%s" % (self.host, self.port, query_suffix)
 
         # curl configuration
         buff = StringIO()
