@@ -11,6 +11,8 @@ from StringIO import StringIO
 # - check about APPEND on entity creation
 # - add documentation to each method and class
 # - add parsing of the JSON replies
+# - modify OrionKP's methods to process lists of entities
+
 
 # Attribute class
 class OrionAttribute:
@@ -234,6 +236,33 @@ class OrionKP:
         # build the query url
         query_url = "%s:%s/ngsi10/contextEntityTypes/%s" % (self.host, self.port, entity_type)
         
+        # curl configuration
+        buff = StringIO()
+        c = pycurl.Curl()
+        c.setopt(pycurl.URL, query_url)
+        c.setopt(pycurl.WRITEFUNCTION, buff.write)
+        c.setopt(pycurl.HTTPHEADER, ['Accept: application/json', 'Content-Type: application/json'])
+
+        # curl debug configuration
+        if self.debug:
+            c.setopt(pycurl.VERBOSE, 1)
+     
+        # curl authentication configuration
+        if self.token:
+            c.setopt(pycurl.USERPWD, self.token)
+
+        # send the request
+        c.perform()
+
+        # return the reply
+        return buff.getvalue()
+
+
+    # custom query
+    def custom_query(self, query_url):
+        
+        """It performs a custom query based on the given URL."""
+
         # curl configuration
         buff = StringIO()
         c = pycurl.Curl()
