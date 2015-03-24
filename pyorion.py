@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-# requirements
 import json
 import pycurl
 from StringIO import StringIO
@@ -179,7 +178,8 @@ class OrionKP:
     def update_entity_attribute(self, entity, attribute):
 
         """As the name states it creates an entity in the Orion Context Broker.
-        the expected parameter is an object of the OrionEntity class"""
+        the expected parameters are an object of the OrionEntity class and an
+        attribute (object of the OrionAttribute class)."""
 
         # build the entity url
         entity_url = "%s:%s/ngsi10/contextEntities/%s/attributes" % (self.host, self.port, entity.entity_id)
