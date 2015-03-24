@@ -60,7 +60,7 @@ class OrionEntity:
         self.attrs = attrs
 
     # attributes addition
-    def add_attribute(self, attributes):
+    def add_attributes(self, attributes):
 
         """This method receives a list of attributes that must be bound to the
         entity and then inserted into the Orion Context Broker"""
