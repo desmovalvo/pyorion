@@ -151,6 +151,39 @@ class OrionKP:
         return buff.getvalue()
 
 
+    # delete entity
+    def delete_entity(self, entity_id):
+
+        """As the name suggests, this method is used to delete an entity from
+        the Orion Context Broker"""
+
+        # build the entity url
+        entity_url = "%s:%s/ngsi10/contextEntities/%s" % (self.host, self.port, entity_id)
+
+        # curl configuration
+        buff = StringIO()
+        c = pycurl.Curl()
+        c.setopt(pycurl.URL, entity_url)
+        c.setopt(pycurl.WRITEFUNCTION, buff.write)
+        c.setopt(pycurl.HTTPHEADER, ['Accept: application/json', 'Content-Type: application/json'])
+        c.setopt(pycurl.CUSTOMREQUEST, "DELETE")
+
+        # curl debug configuration
+        if self.debug:
+            c.setopt(pycurl.VERBOSE, 1)
+     
+        # curl authentication configuration
+        if self.token:
+            c.setopt(pycurl.USERPWD, self.token)
+
+        # send the request
+        c.perform()
+
+        # return the reply
+        return buff.getvalue()        
+
+        
+
     # update entity
     def update_entity(self, entity):
         # TODO: yet to implement
