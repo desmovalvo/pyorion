@@ -144,7 +144,10 @@ class OrionKP:
         the expected parameter is an object of the OrionEntity class"""
 
         # build the entity url
-        entity_url = "%s:%s/ngsi10/contextEntities/%s" % (self.host, self.port, entity.entity_id)
+        entity_url = "%s:%s/ngsi10/updateContext" % (self.host, self.port)
+
+        # data
+        data = { "contextElements" : [ entity.to_json()], "updateAction" : "APPEND" }
 
         # curl configuration
         buff = StringIO()
@@ -153,7 +156,43 @@ class OrionKP:
         c.setopt(pycurl.WRITEFUNCTION, buff.write)
         c.setopt(pycurl.HTTPHEADER, ['Accept: application/json', 'Content-Type: application/json'])
         c.setopt(pycurl.POST, 1)
-        c.setopt(pycurl.POSTFIELDS, json.dumps(entity.to_json()))
+        c.setopt(pycurl.POSTFIELDS, json.dumps(data))
+
+        # curl debug configuration
+        if self.debug:
+            c.setopt(pycurl.VERBOSE, 1)
+     
+        # curl authentication configuration
+        if self.token:
+            c.setopt(pycurl.USERPWD, self.token)
+
+        # send the request
+        c.perform()
+
+        # parse the reply
+        reply = json.loads(buff.getvalue())
+        if not(reply["contextResponses"][0]["statusCode"]["code"] == "200"):
+            raise OrionException(reply["contextResponses"][0]["statusCode"]["reasonPhrase"])
+
+
+    # update entity
+    def update_entity_attribute(self, entity, attribute):
+
+        """As the name states it creates an entity in the Orion Context Broker.
+        the expected parameter is an object of the OrionEntity class"""
+
+        # build the entity url
+        entity_url = "%s:%s/ngsi10/contextEntities/%s/attributes" % (self.host, self.port, entity.entity_id)
+        
+        # curl configuration
+        buff = StringIO()
+        c = pycurl.Curl()
+        c.setopt(pycurl.URL, entity_url)
+        c.setopt(pycurl.WRITEFUNCTION, buff.write)
+        c.setopt(pycurl.HTTPHEADER, ['Accept: application/json', 'Content-Type: application/json'])
+        c.setopt(pycurl.CUSTOMREQUEST, "PUT")
+        data = { "attributes" : [ attribute.to_json() ] }
+        c.setopt(pycurl.POSTFIELDS, json.dumps(data))
 
         # curl debug configuration
         if self.debug:
@@ -204,13 +243,6 @@ class OrionKP:
         return buff.getvalue()        
 
         
-
-    # update entity
-    def update_entity(self, entity):
-        # TODO: yet to implement
-        pass
-
-
     # query
     # TODO: distinguish between the various query types:
     # - query by entity
