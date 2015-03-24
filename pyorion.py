@@ -14,6 +14,22 @@ from StringIO import StringIO
 # - modify OrionKP's methods to process lists of entities
 
 
+# Exception class
+class OrionException(Exception):
+
+    """This class simply inherits from the Exception class"""
+
+    # constructor
+    def __init__(self, value):
+        """Initializer for the OrionException class"""
+        self.value = value
+
+    # __str__
+    def __str__(self):
+        """provides a string representation of the exception"""
+        return repr(self.value)
+
+
 # Attribute class
 class OrionAttribute:
 
@@ -150,8 +166,10 @@ class OrionKP:
         # send the request
         c.perform()
 
-        # return the reply
-        return buff.getvalue()
+        # parse the reply
+        reply = json.loads(buff.getvalue())
+        if not(reply["contextResponses"][0]["statusCode"]["code"] == "200"):
+            raise OrionException(reply["contextResponses"][0]["statusCode"]["reasonPhrase"])
 
 
     # delete entity
