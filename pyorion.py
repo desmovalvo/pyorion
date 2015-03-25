@@ -202,12 +202,24 @@ class OrionKP:
 
 
     # update entities
-    def update_entities(self, entities):
+    def update_entities(self, u1, u2, u3):
 
         """As the name states it updates entities in the Orion Context Broker.
-        the expected parameter is a list of objects of the OrionEntity class"""
+        u1 is a list of entities which existing entities must be updated. 
+        u2 is a list of entities where new attributes must be added.
+        u3 is a list of entities where attribute must be deleted."""
         
-        self.update_context(entities, "APPEND")
+        # updating existing attributes
+        if len(u1) > 0:
+            self.update_context(u1, "UPDATE")
+
+        # adding new attributes
+        if len(u2) > 0:
+            self.update_context(u2, "APPEND")
+
+        # deleting attributes
+        if len(u3) > 0:
+            self.update_context(u3, "DELETE")
 
         
     # query
