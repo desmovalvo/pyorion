@@ -7,9 +7,7 @@ from StringIO import StringIO
 # TODO List:
 # - add the exception handling
 # - should we use getters and setters?
-# - check about APPEND on entity creation
-# - add documentation to each method and class
-# - add parsing of the JSON replies
+# - return Entities as the query results
 # - modify OrionKP's methods to process lists of entities
 
 
@@ -65,13 +63,14 @@ class OrionEntity:
     """This class handles entities of the Orion Context Broker"""
 
     # constructor
-    def __init__(self, entity_id, entity_type, attrs = []):
+    def __init__(self, entity_id, entity_type, is_pattern, attrs = []):
 
         """Initialization method for the OrionEntity class. The required parameters
         are the entity_id, entity_type """
 
         self.entity_id = entity_id
         self.entity_type = entity_type
+        self.is_pattern = is_pattern
         self.attrs = attrs
 
     # attributes addition
@@ -105,6 +104,10 @@ class OrionEntity:
         # fill the entity id and type
         json_entity["id"] = self.entity_id
         json_entity["type"] = self.entity_type
+        if self.is_pattern:
+            json_entity["isPattern"] = "true"
+        else:
+            json_entity["isPattern"] = "false"
         
         # convert the attrs to json
         if len(self.attrs)>0:
@@ -137,8 +140,8 @@ class OrionKP:
         self.debug = debug
 
 
-    # create entity
-    def create_entity(self, entity):
+    # create entities
+    def create_entities(self, entities):
 
         """As the name states it creates an entity in the Orion Context Broker.
         the expected parameter is an object of the OrionEntity class"""
@@ -147,7 +150,11 @@ class OrionKP:
         entity_url = "%s:%s/ngsi10/updateContext" % (self.host, self.port)
 
         # data
-        data = { "contextElements" : [ entity.to_json()], "updateAction" : "APPEND" }
+        e = []
+        for entity in entities:
+            e.append(entity.to_json())
+        data = { "contextElements" : e, "updateAction" : "APPEND" }
+        print json.dumps(data)
 
         # curl configuration
         buff = StringIO()
@@ -171,8 +178,9 @@ class OrionKP:
 
         # parse the reply
         reply = json.loads(buff.getvalue())
-        if not(reply["contextResponses"][0]["statusCode"]["code"] == "200"):
-            raise OrionException(reply["contextResponses"][0]["statusCode"]["reasonPhrase"])
+        print reply
+        # if not(reply["contextResponses"][0]["statusCode"]["code"] == "200"):
+        #     raise OrionException(reply["contextResponses"][0]["statusCode"]["reasonPhrase"])
 
 
     # update entity
@@ -246,12 +254,6 @@ class OrionKP:
 
         
     # query
-    # TODO: distinguish between the various query types:
-    # - query by entity
-    # - query by entity types
-    # - etc... se the NGSI10 documentation
-
-    # query
     def query(self, entities):
 
         """It performs a query using a set of entities"""
@@ -273,9 +275,6 @@ class OrionKP:
         c.setopt(pycurl.HTTPHEADER, ['Accept: application/json', 'Content-Type: application/json'])
         c.setopt(pycurl.POSTFIELDS, json.dumps(data))
 
-        print "REQUEST: " + str(data)
-        print "JREQUES: " + str(json.dumps(data))
-
         # curl debug configuration
         if self.debug:
             c.setopt(pycurl.VERBOSE, 1)
@@ -289,7 +288,6 @@ class OrionKP:
 
         # return the reply
         return buff.getvalue()    
-
 
 
     # query by entity id
