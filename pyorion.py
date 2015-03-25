@@ -140,8 +140,9 @@ class OrionKP:
         self.debug = debug
 
 
-    # create entities
-    def create_entities(self, entities):
+    # update context
+    def update_context(self, entities, action):
+
 
         """As the name states it creates entities in the Orion Context Broker.
         The expected parameter is a list of objects of the OrionEntity class"""
@@ -153,7 +154,7 @@ class OrionKP:
         e = []
         for entity in entities:
             e.append(entity.to_json())
-        data = { "contextElements" : e, "updateAction" : "APPEND" }
+        data = { "contextElements" : e, "updateAction" : action }
 
         # curl configuration
         buff = StringIO()
@@ -177,8 +178,18 @@ class OrionKP:
 
         # parse the reply
         reply = json.loads(buff.getvalue())
+
         if not(reply["contextResponses"][0]["statusCode"]["code"] == "200"):
             raise OrionException(reply["contextResponses"][0]["statusCode"]["reasonPhrase"])
+
+
+    # create entities
+    def create_entities(self, entities):
+
+        """As the name states it creates entities in the Orion Context Broker.
+        The expected parameter is a list of objects of the OrionEntity class"""
+        
+        self.update_context(entities, "APPEND")
 
 
     # delete entities
@@ -187,39 +198,7 @@ class OrionKP:
         """As the name states it deletes entities from the Orion Context Broker.
         the expected parameter is a list of objects of the OrionEntity class"""
 
-        # build the entity url
-        entity_url = "%s:%s/ngsi10/updateContext" % (self.host, self.port)
-
-        # data
-        e = []
-        for entity in entities:
-            e.append(entity.to_json())
-        data = { "contextElements" : e, "updateAction" : "DELETE" }
-
-        # curl configuration
-        buff = StringIO()
-        c = pycurl.Curl()
-        c.setopt(pycurl.URL, entity_url)
-        c.setopt(pycurl.WRITEFUNCTION, buff.write)
-        c.setopt(pycurl.HTTPHEADER, ['Accept: application/json', 'Content-Type: application/json'])
-        c.setopt(pycurl.POST, 1)
-        c.setopt(pycurl.POSTFIELDS, json.dumps(data))
-
-        # curl debug configuration
-        if self.debug:
-            c.setopt(pycurl.VERBOSE, 1)
-     
-        # curl authentication configuration
-        if self.token:
-            c.setopt(pycurl.USERPWD, self.token)
-
-        # send the request
-        c.perform()
-
-        # parse the reply
-        reply = json.loads(buff.getvalue())
-        if not(reply["contextResponses"][0]["statusCode"]["code"] == "200"):
-            raise OrionException(reply["contextResponses"][0]["statusCode"]["reasonPhrase"])
+        self.update_context(entities, "DELETE")
 
 
     # update entities
@@ -227,40 +206,8 @@ class OrionKP:
 
         """As the name states it updates entities in the Orion Context Broker.
         the expected parameter is a list of objects of the OrionEntity class"""
-
-        # build the entity url
-        entity_url = "%s:%s/ngsi10/updateContext" % (self.host, self.port)
-
-        # data
-        e = []
-        for entity in entities:
-            e.append(entity.to_json())
-        data = { "contextElements" : e, "updateAction" : "UPDATE" }
-
-        # curl configuration
-        buff = StringIO()
-        c = pycurl.Curl()
-        c.setopt(pycurl.URL, entity_url)
-        c.setopt(pycurl.WRITEFUNCTION, buff.write)
-        c.setopt(pycurl.HTTPHEADER, ['Accept: application/json', 'Content-Type: application/json'])
-        c.setopt(pycurl.POST, 1)
-        c.setopt(pycurl.POSTFIELDS, json.dumps(data))
-
-        # curl debug configuration
-        if self.debug:
-            c.setopt(pycurl.VERBOSE, 1)
-     
-        # curl authentication configuration
-        if self.token:
-            c.setopt(pycurl.USERPWD, self.token)
-
-        # send the request
-        c.perform()
-
-        # parse the reply
-        reply = json.loads(buff.getvalue())
-        if not(reply["contextResponses"][0]["statusCode"]["code"] == "200"):
-            raise OrionException(reply["contextResponses"][0]["statusCode"]["reasonPhrase"])
+        
+        self.update_context(entities, "APPEND")
 
         
     # query
@@ -388,3 +335,4 @@ class OrionKP:
 
         # return the reply
         return buff.getvalue()
+        
