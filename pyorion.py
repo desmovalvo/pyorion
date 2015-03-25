@@ -143,8 +143,8 @@ class OrionKP:
     # create entities
     def create_entities(self, entities):
 
-        """As the name states it creates an entity in the Orion Context Broker.
-        the expected parameter is an object of the OrionEntity class"""
+        """As the name states it creates entities in the Orion Context Broker.
+        The expected parameter is a list of objects of the OrionEntity class"""
 
         # build the entity url
         entity_url = "%s:%s/ngsi10/updateContext" % (self.host, self.port)
@@ -154,7 +154,6 @@ class OrionKP:
         for entity in entities:
             e.append(entity.to_json())
         data = { "contextElements" : e, "updateAction" : "APPEND" }
-        print json.dumps(data)
 
         # curl configuration
         buff = StringIO()
@@ -178,29 +177,32 @@ class OrionKP:
 
         # parse the reply
         reply = json.loads(buff.getvalue())
-        print reply
-        # if not(reply["contextResponses"][0]["statusCode"]["code"] == "200"):
-        #     raise OrionException(reply["contextResponses"][0]["statusCode"]["reasonPhrase"])
+        if not(reply["contextResponses"][0]["statusCode"]["code"] == "200"):
+            raise OrionException(reply["contextResponses"][0]["statusCode"]["reasonPhrase"])
 
 
-    # update entity
-    def update_entity_attribute(self, entity, attribute):
+    # delete entities
+    def delete_entities(self, entities):
 
-        """As the name states it creates an entity in the Orion Context Broker.
-        the expected parameters are an object of the OrionEntity class and an
-        attribute (object of the OrionAttribute class)."""
+        """As the name states it deletes entities from the Orion Context Broker.
+        the expected parameter is a list of objects of the OrionEntity class"""
 
         # build the entity url
-        entity_url = "%s:%s/ngsi10/contextEntities/%s/attributes" % (self.host, self.port, entity.entity_id)
-        
+        entity_url = "%s:%s/ngsi10/updateContext" % (self.host, self.port)
+
+        # data
+        e = []
+        for entity in entities:
+            e.append(entity.to_json())
+        data = { "contextElements" : e, "updateAction" : "DELETE" }
+
         # curl configuration
         buff = StringIO()
         c = pycurl.Curl()
         c.setopt(pycurl.URL, entity_url)
         c.setopt(pycurl.WRITEFUNCTION, buff.write)
         c.setopt(pycurl.HTTPHEADER, ['Accept: application/json', 'Content-Type: application/json'])
-        c.setopt(pycurl.CUSTOMREQUEST, "PUT")
-        data = { "attributes" : [ attribute.to_json() ] }
+        c.setopt(pycurl.POST, 1)
         c.setopt(pycurl.POSTFIELDS, json.dumps(data))
 
         # curl debug configuration
@@ -220,14 +222,20 @@ class OrionKP:
             raise OrionException(reply["contextResponses"][0]["statusCode"]["reasonPhrase"])
 
 
-    # delete entity
-    def delete_entity(self, entity_id):
+    # update entities
+    def update_entities(self, entities):
 
-        """As the name suggests, this method is used to delete an entity from
-        the Orion Context Broker"""
+        """As the name states it updates entities in the Orion Context Broker.
+        the expected parameter is a list of objects of the OrionEntity class"""
 
         # build the entity url
-        entity_url = "%s:%s/ngsi10/contextEntities/%s" % (self.host, self.port, entity_id)
+        entity_url = "%s:%s/ngsi10/updateContext" % (self.host, self.port)
+
+        # data
+        e = []
+        for entity in entities:
+            e.append(entity.to_json())
+        data = { "contextElements" : e, "updateAction" : "UPDATE" }
 
         # curl configuration
         buff = StringIO()
@@ -235,7 +243,7 @@ class OrionKP:
         c.setopt(pycurl.URL, entity_url)
         c.setopt(pycurl.WRITEFUNCTION, buff.write)
         c.setopt(pycurl.HTTPHEADER, ['Accept: application/json', 'Content-Type: application/json'])
-        c.setopt(pycurl.CUSTOMREQUEST, "DELETE")
+        c.setopt(pycurl.POST, 1)
         c.setopt(pycurl.POSTFIELDS, json.dumps(data))
 
         # curl debug configuration
@@ -249,8 +257,10 @@ class OrionKP:
         # send the request
         c.perform()
 
-        # return the reply
-        return buff.getvalue()        
+        # parse the reply
+        reply = json.loads(buff.getvalue())
+        if not(reply["contextResponses"][0]["statusCode"]["code"] == "200"):
+            raise OrionException(reply["contextResponses"][0]["statusCode"]["reasonPhrase"])
 
         
     # query
