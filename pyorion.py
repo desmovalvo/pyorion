@@ -107,10 +107,11 @@ class OrionEntity:
         json_entity["type"] = self.entity_type
         
         # convert the attrs to json
-        json_attrs = []
-        for attr in self.attrs:
-            json_attrs.append(attr.to_json())
-        json_entity["attributes"] = json_attrs
+        if len(self.attrs)>0:
+            json_attrs = []
+            for attr in self.attrs:
+                json_attrs.append(attr.to_json())
+            json_entity["attributes"] = json_attrs
 
         # return
         return json_entity
@@ -227,6 +228,7 @@ class OrionKP:
         c.setopt(pycurl.WRITEFUNCTION, buff.write)
         c.setopt(pycurl.HTTPHEADER, ['Accept: application/json', 'Content-Type: application/json'])
         c.setopt(pycurl.CUSTOMREQUEST, "DELETE")
+        c.setopt(pycurl.POSTFIELDS, json.dumps(data))
 
         # curl debug configuration
         if self.debug:
@@ -248,6 +250,47 @@ class OrionKP:
     # - query by entity
     # - query by entity types
     # - etc... se the NGSI10 documentation
+
+    # query
+    def query(self, entities):
+
+        """It performs a query using a set of entities"""
+
+        # build the query url
+        query_url = "%s:%s/ngsi10/queryContext" % (self.host, self.port)
+
+        # build the data for the query
+        es = []
+        for entity in entities:
+            es.append(entity.to_json())
+        data = { "entities" : es }
+
+        # curl configuration
+        buff = StringIO()
+        c = pycurl.Curl()
+        c.setopt(pycurl.URL, query_url)
+        c.setopt(pycurl.WRITEFUNCTION, buff.write)
+        c.setopt(pycurl.HTTPHEADER, ['Accept: application/json', 'Content-Type: application/json'])
+        c.setopt(pycurl.POSTFIELDS, json.dumps(data))
+
+        print "REQUEST: " + str(data)
+        print "JREQUES: " + str(json.dumps(data))
+
+        # curl debug configuration
+        if self.debug:
+            c.setopt(pycurl.VERBOSE, 1)
+     
+        # curl authentication configuration
+        if self.token:
+            c.setopt(pycurl.USERPWD, self.token)
+
+        # send the request
+        c.perform()
+
+        # return the reply
+        return buff.getvalue()    
+
+
 
     # query by entity id
     def query_by_entity_id(self, entity_id):
